@@ -1,27 +1,31 @@
+# import the necessary packages
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+from sklearn.datasets import make_blobs
+import matplotlib.pyplot as plt
 import numpy as np
-import cv2
+import argparse
 
-# to initialize the class labels and set the seed of the pseudorandom number generator
-labels = ["dog", "cat", "panda"]
-np.random.seed(1)
+def sigmoid_activation(x):
+	return 1.0 / (1 + np.exp(-x))
+
+def predict(X, W):
+	preds = sigmoid_activation(X.dot(W))
+	preds[preds <= 0.5] = 0
+	preds[preds > 0] = 1
+	return preds
+
+def next_batch(X, y, batchSize):
+	''' loop over our dataset 'X' in nmini-batchs, yielding
+	a tuple of the current batched data and labels'''
+	for i in np.arange(0, X.shape[0], batchSize):
+		yield(X[i:i + batchSize], y[i:i + batchSize])
 
 
-W = np.random.randn(3, 3072)
-b = np.random.randn(3)
+ap = argparse.ArgumentParser()
+ap.add_argument("-e", "--epochs", type=float, default=100, help="# of epochs")
+ap.add_argument("-a", "--alpha", type=float, default=0.01, help="learning rate")
+ap.add_argument("-b", "--batch_size", type=int, default=32, help="size of SGD mini-batches")
+args = vars(ap.parse_args())
 
-# to load the example image, resize it, and flatten it into "feature vector"
-orig = cv2.imread("/home/kcl/Desktop/img_2.jpg")
-image = cv2.resize(orig, (32, 32)).flatten()
-
-# compute the output scores by taking the dot product between the weight matrix and image pixels
-scores = W.dot(image) + b
-
-for label, score in zip(labels, scores):
-	print("[INFO] {}: {:.2f}".format(label, score))
-
-# draw the label with the heighest score on the image as our prediction
-cv2.putText(orig, "Label: {}".format(labels[np.argmax(scores)]), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-
-# display our input image
-cv2.imshow("image", orig)
-cv2.waitKey(0)
+''' generate a 2-class 
